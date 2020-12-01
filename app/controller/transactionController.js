@@ -1,6 +1,6 @@
 "use strict";
 
-var Transaction = require("../model/TransactionModel.js");
+var Transaction = require("../model/transactionModel.js");
 var Client = require("../model/clientModel.js");
 var TransactionLog = require("../model/transactionLogModel.js");
 
