@@ -3,37 +3,38 @@
 var Transaction = require("../model/TransactionModel.js");
 var Client = require("../model/clientModel.js");
 var TransactionLog = require("../model/transactionLogModel.js");
-var  isValidTransaction = (TransactionObj) =>{
-    var exemptAmount =0;
+
+
+ function isValidTransaction(TransactionObj){
+    if( !TransactionObj.amount || !TransactionObj.client_id || !TransactionObj.refno || !TransactionObj.currency ) {
+        return {status:false, msg: "mandatory parameter not received properly [ amount, client_id,refno, currency  ]"};
+    }
+    let exemptAmount =  getexemptAmount(TransactionObj);
+    if(TransactionObj.amount - exemptAmount <=0  ) {
+        return {status:false, msg: "Invalid service_tax or vat"};
+    }
+    if(TransactionObj.amount  <=0  ) {
+        return {status:false, msg: "Invalid amount"};
+    }
+    return {status:true, msg: ""};
+}
+function getexemptAmount(TransactionObj){
+    let exemptAmount =0;
     if( TransactionObj.hasOwnProperty('service_tax') && ! isNaN(TransactionObj.service_tax) ){
         exemptAmount =  TransactionObj.service_tax;
     } 
     if( TransactionObj.hasOwnProperty('vat') && ! isNaN(TransactionObj.vat) ) {
         exemptAmount +=  TransactionObj.vat;
     }
-    if(TransactionObj.amount - exemptAmount <=0  ) {
-        return false;
-    }
-
-    if( !TransactionObj.amount || !TransactionObj.client_id || !TransactionObj.refno || !TransactionObj.currency ) {
-        return false;
-    }
-    return true;
+    return exemptAmount;
 }
 function getSerCharge ( TransactionObj, clientSerChargeRate) {
-    var exemptAmount =0;
-    if( TransactionObj.hasOwnProperty('service_tax') && ! isNaN(TransactionObj.service_tax) ){
-        exemptAmount =  TransactionObj.service_tax;
-    } 
-    if( TransactionObj.hasOwnProperty('vat') && ! isNaN(TransactionObj.vat) ) {
-        exemptAmount +=  TransactionObj.vat;
-    }
+    let exemptAmount = getexemptAmount(TransactionObj);
     return (TransactionObj.amount - exemptAmount) * clientSerChargeRate /100;
 }
 
 function sendErrorResponse(errorCode, msg){
-    console.log("err : "+msg);
-    res.status(500).send({ 'status' : 500, 'msg' :msg});
+    res.status(errorCode).json({ 'status' : errorCode, 'msg' :msg});
 }
 
 exports.createPayment = (req, res) => {
@@ -44,10 +45,10 @@ exports.createPayment = (req, res) => {
             return;
         }
         var logId = log.insertId;
-        console.log("log saved \n transaction start \n");
         var newTransaction = new Transaction(req.body);
-        if( !isValidTransaction(newTransaction) ) {
-            sendErrorResponse(500, 'Please provide mandatory parameter in proper format' );
+        let validParamObj = isValidTransaction(newTransaction);
+        if( !validParamObj.status ) {
+            sendErrorResponse(500, validParamObj.msg);
             return;
         }
         Client.getClientById( newTransaction.client_id, (err,result) => {
@@ -77,7 +78,7 @@ exports.createPayment = (req, res) => {
                         return;
                     }
                 });
-                res.status(200).send( response );
+                res.status(200).json( response );
             });
               
         });
@@ -87,11 +88,9 @@ exports.createPayment = (req, res) => {
 
 exports.getAllTransactions = (req , res) => {
     Transaction.getAllTransaction( (err , Transaction) => {
-        console.log("Transaction Controller");
         if(err) 
             res.status(500).json( { 'status' : 500, 'msg' : err.message});
-        console.log( "res" , Transaction);
-        res.send(Transaction);    
+        res.json(Transaction);    
     });
 } 
 

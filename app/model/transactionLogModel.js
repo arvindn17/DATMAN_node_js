@@ -12,11 +12,9 @@ var TransactionLog = function(TransactionLog) {
 TransactionLog.createLog = (newTransactionLog, result) => {
     sql.query(" insert into transaction_log set ? ", newTransactionLog , (err, res)=>{
         if( err ) {
-            console.log("error", err);
             result(err , null);
         }
         else{
-            console.log("record insert id is "+res.insertId);
             result(null, res);
         }
     });
@@ -25,7 +23,6 @@ TransactionLog.createLog = (newTransactionLog, result) => {
 TransactionLog.getTransactionLogById = (TransactionLogId, result) => {
     sql.query("Select * from transaction_log where id = ? ", TransactionLogId, function (err, res) {             
         if(err) {
-            console.log("error: ", err);
             result(err, null);
         }
         else{
@@ -40,7 +37,6 @@ TransactionLog.updateLogById = (transactionLogId, Log, result) => {
             result(err, null);
         }
         else{
-            console.log(res);
             result(null, res);
         }
     });  

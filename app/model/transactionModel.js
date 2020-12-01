@@ -7,13 +7,15 @@ var Payment = function(payment){
     this.amount = payment.amount;
     this.client_id = payment.client_id;
     this.refno = payment.refno;
-    this.service_tax = payment.service_tax;
-    this.vat = payment.vat;
+    this.service_tax = !payment.service_tax ? 0 : payment.service_tax;
+    this.vat = !payment.vat ? 0 :payment.vat  ;
     this.currency = payment.currency;
     this.ser_charge = payment.ser_charge;
-    this.line_items = payment.line_items;
+    this.line_items = !payment.line_items ? '' : payment.line_items;
 
 }
+
+
 
 Payment.createTransaction = function(newPayment, result){
     newPayment.status = 'init';
@@ -23,7 +25,7 @@ Payment.createTransaction = function(newPayment, result){
             result(err , null);
         }
         else{
-            console.log("record insert id is "+res.insertId);
+            
             result(null, res);
         }
     });
@@ -48,7 +50,6 @@ Payment.getAllTransaction = (result) => {
             result(err, null);
         }
         else{
-            console.log(res);
             result(null, res);
         }
     });  
