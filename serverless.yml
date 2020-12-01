@@ -1,0 +1,23 @@
+# serverless.yml
+
+service: datman-api-test
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  memorySize: 128
+  timeout: 30
+  stage: dev
+  region: us-west-1
+  apiGateway:
+    shouldStartNameWithService: true
+
+functions:
+  app:
+    handler: lambda.server
+    events:
+      - http: ANY /
+      - http: 'ANY {proxy+}'
+
+plugins:
+  - serverless-offline

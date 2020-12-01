@@ -33,7 +33,7 @@ function getSerCharge ( TransactionObj, clientSerChargeRate) {
     return (TransactionObj.amount - exemptAmount) * clientSerChargeRate /100;
 }
 
-function sendErrorResponse(errorCode, msg){
+function sendErrorResponse(res, errorCode, msg){
     res.status(errorCode).json({ 'status' : errorCode, 'msg' :msg});
 }
 
@@ -41,31 +41,31 @@ exports.createPayment = (req, res) => {
     var newLog = new TransactionLog( { "request" : JSON.stringify(req.body),'response' : '','txn_id' : 0, 'action' : 'transaction'  });    
     TransactionLog.createLog(newLog,(err, log) => {
         if(err) {
-            sendErrorResponse(500, "log couldn't be saved ");
+            sendErrorResponse(res, 500, "log couldn't be saved ");
             return;
         }
         var logId = log.insertId;
         var newTransaction = new Transaction(req.body);
         let validParamObj = isValidTransaction(newTransaction);
         if( !validParamObj.status ) {
-            sendErrorResponse(500, validParamObj.msg);
+            sendErrorResponse(res, 500, validParamObj.msg);
             return;
         }
         Client.getClientById( newTransaction.client_id, (err,result) => {
             if(err) {
-                sendErrorResponse(500, "client detail not found");
+                sendErrorResponse(res, 500, "client detail not found");
                 return;
             }
             newTransaction.ser_charge = getSerCharge(newTransaction, result[0]["ser_charge_rate"]);
             Transaction.createTransaction(newTransaction, (err, Transaction) => {
                 if(err) {
-                    sendErrorResponse(500, err.message);
+                    sendErrorResponse(res, 500, err.message);
                     return;
                 }
                 var clientBalance =  newTransaction.amount - newTransaction.ser_charge;
                 Client.updateById(newTransaction.client_id, clientBalance, (err,res)=>{
                     if(err) {
-                        sendErrorResponse(500, err.message);
+                        sendErrorResponse(res, 500, err.message);
                         return;
                     }
                 });
@@ -74,7 +74,7 @@ exports.createPayment = (req, res) => {
                 newLog.txn_id = Transaction.insertId;
                 TransactionLog.updateLogById( logId, newLog, (err, result) => {
                     if(err) {
-                        sendErrorResponse(500, err.message);
+                        sendErrorResponse(res, 500, err.message);
                         return;
                     }
                 });

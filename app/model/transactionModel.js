@@ -15,8 +15,6 @@ var Payment = function(payment){
 
 }
 
-
-
 Payment.createTransaction = function(newPayment, result){
     newPayment.status = 'init';
     sql.query(" insert into transaction set ? ", newPayment , (err, res)=>{
